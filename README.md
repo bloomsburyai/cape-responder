@@ -1,4 +1,4 @@
-# Responder 
+# Responder [![CircleCI](https://circleci.com/gh/bloomsburyai/cape-responder.svg?style=svg&circle-token=b5ee23c34b3a598f693b638009fc169f0cf7bf4c)](https://circleci.com/gh/bloomsburyai/cape-responder)
 Responder library
 
 ##Settings
