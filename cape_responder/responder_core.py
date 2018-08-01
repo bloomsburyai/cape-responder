@@ -1,3 +1,4 @@
+from math import ceil
 from typing import List, Tuple, Dict, Optional
 import json
 import numpy as np
@@ -12,11 +13,6 @@ from cape_document_qa import cape_docqa_machine_reader
 from cape_api_helpers.exceptions import UserException
 from cape_api_helpers.text_responses import ERROR_INVALID_THRESHOLD
 from cape_responder.task_manager import connect
-
-
-def _cache_key(token, text_group) -> str:
-    return f"{token}_{text_group.parent_doc_id.replace('/', '_')}_{text_group.idx}"
-
 
 THRESHOLD_MAP = {
     'savedreply': {
@@ -36,7 +32,6 @@ THRESHOLD_MAP = {
 }
 
 SPEED_OR_ACCURACY_CHUNKS_MAP = {'speed': 0.25, 'balanced': 1, 'accuracy': 4, 'total': -1}
-SPEED_OR_ACCURACY_BATCHES_MAP = {'speed': 1, 'balanced': 1, 'accuracy': 1, 'total': 2}
 
 
 class Responder:
@@ -64,8 +59,7 @@ class Responder:
             threshold_value = THRESHOLD_MAP['document'][threshold]
         except KeyError:
             raise UserException(ERROR_INVALID_THRESHOLD)
-        return MachineReaderConfiguration(threshold_reader=threshold_value,
-                                          top_k=top_k)
+        return MachineReaderConfiguration(threshold_reader=threshold_value, top_k=top_k)
 
     @staticmethod
     def get_answers_from_similar_questions(
@@ -81,21 +75,13 @@ class Responder:
         :param question:                            question in string format
         :param type:                                'saved_reply', 'annotation' or 'all'
         :param document_ids:                        Limit annotation search to specified document IDs
+        :param threshold:                           Only return results with the given confidence
         """
-
-        results = []
-
-        if type == 'saved_reply' or type == 'all':
-            results.extend(AnnotationStore.similar_annotations(user_token, question, saved_replies=True))
-
-        if type == 'annotation' or type == 'all':
-            results.extend(AnnotationStore.similar_annotations(user_token, question,
-                                                               document_ids=document_ids, saved_replies=False))
-
-        threshold_value = THRESHOLD_MAP['savedreply'].get(threshold, THRESHOLD_MAP['savedreply']['MEDIUM'])
-
+        type_to_param = {'all': None, 'saved_reply': True, 'annotation': False}
+        results = AnnotationStore.similar_annotations(user_token, question, document_ids,
+                                                      saved_replies=type_to_param[type])
+        threshold_value = THRESHOLD_MAP['savedreply'][threshold]
         results = filter(lambda reply: reply['confidence'] >= threshold_value, results)
-
         return results
 
     @staticmethod
@@ -106,7 +92,8 @@ class Responder:
             offset: int = 0,
             number_of_items: int = 1,
             text: str = None,
-            threshold: str = 'MEDIUM'
+            threshold: str = 'MEDIUM',
+            speed_or_accuracy: str = 'balanced',
     ) -> List[dict]:
         """
         Returns answers from a user's documents
@@ -127,7 +114,13 @@ class Responder:
                 document_ids.append(temp_id)
             else:
                 document_ids = [temp_id]
-        chunk_results = list(DocumentStore.search_chunks(user_token, question, document_ids=document_ids))
+        speed_or_accuracy_coef = SPEED_OR_ACCURACY_CHUNKS_MAP[speed_or_accuracy]
+        if speed_or_accuracy_coef > 0:
+            limit_per_doc = int(ceil(number_of_items * NUM_WORKERS_PER_REQUEST * speed_or_accuracy_coef))
+        else:
+            limit_per_doc = None
+        chunk_results = list(DocumentStore.search_chunks(user_token, question, document_ids=document_ids,
+                                                         limit_per_doc=limit_per_doc))
         if len(chunk_results) == 0:
             # We don't have any matching documents
             return []
