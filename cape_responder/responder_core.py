@@ -211,7 +211,6 @@ class Responder:
     def reduce_results(future_answers, machine_reader_configuration: MachineReaderConfiguration,
                        chunks: List[SearchResult]) -> List[dict]:
         flat_logits, flat_overlaps, flat_text, positions = Responder.combine_chunks(future_answers, chunks)
-        print(flat_logits, flat_overlaps, flat_text, positions)
         results = []
         answer_spans = []
         answer_context_spans = []
