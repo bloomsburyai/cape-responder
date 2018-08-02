@@ -81,7 +81,7 @@ class Responder:
         results = AnnotationStore.similar_annotations(user_token, question, document_ids,
                                                       saved_replies=type_to_param[type])
         threshold_value = THRESHOLD_MAP['savedreply'][threshold]
-        results = filter(lambda reply: reply['confidence'] >= threshold_value, results)
+        results = list(filter(lambda reply: reply['confidence'] >= threshold_value, results))
         return results
 
     @staticmethod
@@ -137,7 +137,7 @@ class Responder:
 
         threshold_value = THRESHOLD_MAP['document'].get(threshold, THRESHOLD_MAP['document']['MEDIUM'])
 
-        results = filter(lambda reply: reply['confidence'] >= threshold_value, results)
+        results = list(filter(lambda reply: reply['confidence'] >= threshold_value, results))
 
         return results
 
