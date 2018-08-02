@@ -88,7 +88,7 @@ class Responder:
     def get_answers_from_documents(
             user_token: str,
             question: str,
-            document_ids: Optional[List[str]],
+            document_ids: Optional[List[str]] = None,
             offset: int = 0,
             number_of_items: int = 1,
             text: str = None,
