@@ -107,9 +107,7 @@ class Responder:
         if text is not None:
             temp_id = 'Inline text-' + sha256(text.encode('utf-8')).hexdigest()
             DocumentStore.create_document(user_token, "Inline text", "Inline text", text,
-                                          document_id=temp_id, replace=True,
-                                          get_embedding=Responder.get_empty_embeddings)  # Don't generate embeddings for
-            # inline documents
+                                          document_id=temp_id, replace=True)
             if document_ids is not None:
                 document_ids.append(temp_id)
             else:
@@ -249,7 +247,3 @@ class Responder:
     @staticmethod
     def get_document_embeddings(text):
         return json.dumps(Responder.get_machine_reader().get_document_embedding(text).tolist())
-
-    @staticmethod
-    def get_empty_embeddings(text):
-        return ''
