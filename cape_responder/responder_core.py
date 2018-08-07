@@ -32,6 +32,7 @@ THRESHOLD_MAP = {
 }
 
 SPEED_OR_ACCURACY_CHUNKS_MAP = {'speed': 0.25, 'balanced': 1, 'accuracy': 4, 'total': -1}
+MACHINE_READER_MODEL_TYPE_TO_USE = 'CAPE_DOCUMENT_QA'
 
 
 class Responder:
@@ -40,8 +41,11 @@ class Responder:
     @staticmethod
     def get_machine_reader():
         if Responder._MACHINE_READER is None:
-            machine_reader_conf = cape_docqa_machine_reader.get_production_model_config()
-            machine_reader_model = cape_docqa_machine_reader.CapeDocQAMachineReaderModel(machine_reader_conf)
+            if MACHINE_READER_MODEL_TYPE_TO_USE == 'CAPE_DOCUMENT_QA':
+                machine_reader_conf = cape_docqa_machine_reader.get_production_model_config()
+                machine_reader_model = cape_docqa_machine_reader.CapeDocQAMachineReaderModel(machine_reader_conf)
+            else:
+                raise ValueError('Machine reader model type {} not implemented'.format(MACHINE_READER_MODEL_TYPE_TO_USE))
             Responder._MACHINE_READER = MachineReader(machine_reader_model)
         return Responder._MACHINE_READER
 
